@@ -9,3 +9,7 @@ variable "user_saves_bucket_name" {
 variable "default_tags" {
   type = map(string)
 }
+
+variable "environment" {
+  type = string
+}

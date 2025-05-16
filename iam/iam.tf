@@ -12,6 +12,11 @@ resource "aws_iam_role_policy_attachment" "lambdaExec_s3" {
   role       = aws_iam_role.lambdaExec.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
+resource "aws_iam_role_policy_attachment" "lambdaExec_logging" {
+  role       = aws_iam_role.lambdaExec.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
+
 
 data "aws_iam_policy_document" "lambda_assume_role" {
 

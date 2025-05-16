@@ -9,6 +9,7 @@ MAX_S3_VERSIONS = int(os.getenv("MAX_S3_VERSIONS", 10)) #Configurable, how many 
 ### Supports minimal Exception logging to AWS Cloudwatch logs via print, later can change to import logging, and json dump into a logger object to log/trace the key that errored
 
 def main(event, context):
+    print("AWS Lambda triggered successfully")
     try:
         headers = event.get("headers", {})
         auth_header = headers.get("authorization") or headers.get("Authorization")
@@ -55,9 +56,14 @@ def handle_upload(key):
 
     url = s3.generate_presigned_url(
         ClientMethod="put_object",
-        Params={"Bucket": bucket, "Key": key},
+        Params={
+            "Bucket": bucket,
+            "Key": key,
+            "ContentType": "application/octet-stream"  # 🔥 Required for header match
+        },
         ExpiresIn=900
     )
+
     return response(200, {"url": url}) #200 = success
 
 def handle_download(key):

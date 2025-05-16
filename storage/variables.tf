@@ -10,3 +10,7 @@ variable "api_base_url" {
   description = "The public URL of the API Gateway"
   type        = string
 }
+
+variable "environment" {
+  type = string
+}

@@ -35,8 +35,24 @@ resource "aws_apigatewayv2_route" "delete_route" {
 ###
 ###
 
-resource "aws_apigatewayv2_stage" "unity_stage" {
+resource "aws_apigatewayv2_deployment" "unity_api_deploy" {
   api_id = aws_apigatewayv2_api.unity_api.id
-  name   = "$default"
-  tags   = var.default_tags
+  description = "Force redeploy ${timestamp()}"  # this forces a new deployment terraform sees this object changed
+  depends_on = [
+    aws_apigatewayv2_route.upload_route,
+    aws_apigatewayv2_route.download_route,
+    aws_apigatewayv2_route.delete_route,
+    aws_apigatewayv2_integration.unity_lambda
+  ]
 }
+
+resource "aws_apigatewayv2_stage" "unity_stage" {
+  api_id        = aws_apigatewayv2_api.unity_api.id
+  name          = var.environment
+  deployment_id = aws_apigatewayv2_deployment.unity_api_deploy.id
+  auto_deploy   = false
+  tags          = var.default_tags # update on terraform apply? This project is DEV only right now so true
+}
+
+
+
