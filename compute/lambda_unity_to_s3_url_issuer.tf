@@ -7,11 +7,12 @@ resource "aws_lambda_function" "unity_s3_url_issuer" {
   filename         = "${path.module}/lambda/unity_s3_url_issuer.zip"
   source_code_hash = filebase64sha256("${path.module}/unity_s3_url_issuer.zip")
 
-  environment {
-    variables = {
-      BUCKET_NAME = var.user_saves_bucket_name
-    }
+environment {
+  variables = {
+    BUCKET_NAME       = var.user_saves_bucket_name
+    MAX_S3_VERSIONS   = "10"  # string here, parsed as int in Python - this is for application state file backups, auto removes oldest in the .py file
   }
+}
 
   tags = var.default_tags
 }

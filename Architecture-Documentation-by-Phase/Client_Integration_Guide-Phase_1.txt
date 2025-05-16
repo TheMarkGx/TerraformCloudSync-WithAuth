@@ -1,0 +1,101 @@
+Unity Cloud Save - Client Integration Guide (Phase 1)
+
+This is a Phase 1 deployment of the cloud save API infrastructure.
+It allows clients (like Unity) to upload and download application state files using HTTP requests.
+The backend is deployed via Terraform to AWS using S3, API Gateway, and Lambda.
+
+Authentication is mocked for this phase; real OAuth will be implemented in Phase 2.
+
+---
+
+## Authentication
+
+All requests must include the following header:
+
+Authorization: Bearer dev-test-token
+
+In this phase, no real JWT is required. A static token 'dev-test-token' is accepted as a placeholder.
+The backend is configured to bypass JWT parsing if this exact token is provided.
+
+---
+
+## API Endpoints
+
+Base URL (example):
+https\://\<api\_id>.execute-api.<region>.amazonaws.com/
+
+---
+
+## POST /upload
+
+Purpose: Upload a save file to S3
+
+Method: POST
+Headers:
+
+* Authorization: Bearer dev-test-token
+* Content-Type: application/octet-stream
+
+Body: Raw binary contents of the save file
+Response: { "message": "Upload successful", "versionId": "<optional>" }
+
+Unity C# Example:
+UnityWebRequest req = UnityWebRequest.Put(uploadUrl, saveBytes);
+req.SetRequestHeader("Authorization", "Bearer dev-test-token");
+req.SetRequestHeader("Content-Type", "application/octet-stream");
+yield return req.SendWebRequest();
+
+---
+
+## GET /download
+
+Purpose: Download the latest save file
+
+Method: GET
+Headers:
+
+* Authorization: Bearer dev-test-token
+
+Response: Binary contents of the save file
+
+Unity C# Example:
+UnityWebRequest req = UnityWebRequest.Get(downloadUrl);
+req.SetRequestHeader("Authorization", "Bearer dev-test-token");
+yield return req.SendWebRequest();
+byte\[] saveBytes = req.downloadHandler.data;
+
+---
+
+## DELETE /delete
+
+Purpose: Delete the current user's save file
+
+Method: DELETE
+Headers:
+
+* Authorization: Bearer dev-test-token
+
+Response: { "message": "File deleted" }
+
+---
+
+## S3 Object Management
+
+* Save files are stored under a per-user folder path, which is mocked as 'dev\_user' during Phase 1.
+* S3 versioning is enabled, preparing for future version/restore capabilities.
+
+---
+
+## Local Testing Examples
+
+curl -X POST "\$UPLOAD\_URL"&#x20;
+-H "Authorization: Bearer dev-test-token"&#x20;
+\--data-binary "@SaveFile.dat"
+
+curl -X GET "\$DOWNLOAD\_URL"&#x20;
+-H "Authorization: Bearer dev-test-token"&#x20;
+-o "DownloadedSave.dat"
+
+---
+
+Note: In Phase 2, OAuth-based JWT validation will be implemented. Clients will obtain tokens via Google Sign-In and the backend will validate token signatures, expiration, and user identity fields.

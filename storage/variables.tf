@@ -5,3 +5,8 @@ variable "default_tags" {
 variable "suffix" {
   type = string
 }
+
+variable "api_base_url" {
+  description = "The public URL of the API Gateway"
+  type        = string
+}
