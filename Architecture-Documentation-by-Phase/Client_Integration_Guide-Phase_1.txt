@@ -1,101 +1,107 @@
-Unity Cloud Save - Client Integration Guide (Phase 1)
+# Unity Cloud Save – Client Integration Guide (Phase 1)
 
-This is a Phase 1 deployment of the cloud save API infrastructure.
-It allows clients (like Unity) to upload and download application state files using HTTP requests.
-The backend is deployed via Terraform to AWS using S3, API Gateway, and Lambda.
+This guide explains how to integrate the Phase 1 cloud save API from Unity or any HTTP client. The backend is deployed using Terraform to AWS (S3, Lambda, API Gateway).
 
-Authentication is mocked for this phase; real OAuth will be implemented in Phase 2.
+Authentication is mocked in this phase. Real OAuth integration is planned for Phase 2.
 
 ---
 
 ## Authentication
 
-All requests must include the following header:
+All requests must include:
 
+```
 Authorization: Bearer dev-test-token
+```
 
-In this phase, no real JWT is required. A static token 'dev-test-token' is accepted as a placeholder.
-The backend is configured to bypass JWT parsing if this exact token is provided.
+This static token is used to bypass real JWT validation in Lambda. Any request with this exact token is accepted.
 
 ---
 
 ## API Endpoints
 
-Base URL (example):
-https\://\<api\_id>.execute-api.<region>.amazonaws.com/
+**Base URL format:**
+```
+https://<api_id>.execute-api.<region>.amazonaws.com/
+```
 
 ---
 
-## POST /upload
+### `POST /upload`
 
-Purpose: Upload a save file to S3
+**Purpose:** Upload a save file to S3  
+**Method:** POST  
+**Headers:**
+- Authorization: Bearer dev-test-token
+- Content-Type: application/octet-stream  
+**Body:** Raw binary contents of the save file  
+**Response:** `{ "message": "Upload successful", "versionId": "<optional>" }`
 
-Method: POST
-Headers:
-
-* Authorization: Bearer dev-test-token
-* Content-Type: application/octet-stream
-
-Body: Raw binary contents of the save file
-Response: { "message": "Upload successful", "versionId": "<optional>" }
-
-Unity C# Example:
+**Unity C# Example:**
+```csharp
 UnityWebRequest req = UnityWebRequest.Put(uploadUrl, saveBytes);
 req.SetRequestHeader("Authorization", "Bearer dev-test-token");
 req.SetRequestHeader("Content-Type", "application/octet-stream");
 yield return req.SendWebRequest();
+```
 
 ---
 
-## GET /download
+### `GET /download`
 
-Purpose: Download the latest save file
+**Purpose:** Download the latest save file  
+**Method:** GET  
+**Headers:**
+- Authorization: Bearer dev-test-token  
+**Response:** Raw binary contents of the save file
 
-Method: GET
-Headers:
-
-* Authorization: Bearer dev-test-token
-
-Response: Binary contents of the save file
-
-Unity C# Example:
+**Unity C# Example:**
+```csharp
 UnityWebRequest req = UnityWebRequest.Get(downloadUrl);
 req.SetRequestHeader("Authorization", "Bearer dev-test-token");
 yield return req.SendWebRequest();
-byte\[] saveBytes = req.downloadHandler.data;
+byte[] saveBytes = req.downloadHandler.data;
+```
 
 ---
 
-## DELETE /delete
+### `DELETE /delete`
 
-Purpose: Delete the current user's save file
-
-Method: DELETE
-Headers:
-
-* Authorization: Bearer dev-test-token
-
-Response: { "message": "File deleted" }
+**Purpose:** Delete the current save file  
+**Method:** DELETE  
+**Headers:**
+- Authorization: Bearer dev-test-token  
+**Response:** `{ "message": "File deleted" }`
 
 ---
 
 ## S3 Object Management
 
-* Save files are stored under a per-user folder path, which is mocked as 'dev\_user' during Phase 1.
-* S3 versioning is enabled, preparing for future version/restore capabilities.
+- All save files are stored in S3 under a hardcoded path: `dev_user/master-save.dat`
+- S3 versioning is already enabled in anticipation of future features like checkpoints and restore
 
 ---
 
-## Local Testing Examples
+## Local Testing (cURL Examples)
 
-curl -X POST "\$UPLOAD\_URL"&#x20;
--H "Authorization: Bearer dev-test-token"&#x20;
-\--data-binary "@SaveFile.dat"
+```bash
+curl -X POST "$UPLOAD_URL" \
+  -H "Authorization: Bearer dev-test-token" \
+  --data-binary "@SaveFile.dat"
 
-curl -X GET "\$DOWNLOAD\_URL"&#x20;
--H "Authorization: Bearer dev-test-token"&#x20;
--o "DownloadedSave.dat"
+curl -X GET "$DOWNLOAD_URL" \
+  -H "Authorization: Bearer dev-test-token" \
+  -o "DownloadedSave.dat"
+
+curl -X DELETE "$DELETE_URL" \
+  -H "Authorization: Bearer dev-test-token"
+```
 
 ---
 
-Note: In Phase 2, OAuth-based JWT validation will be implemented. Clients will obtain tokens via Google Sign-In and the backend will validate token signatures, expiration, and user identity fields.
+## Coming in Phase 2
+
+- OAuth token authentication using Google Sign-In
+- Server-side validation of JWTs (audience, expiration, signature)
+- Per-user save isolation in S3
+- Real user folder prefixes (e.g. `users/<user_hash>/master-save.dat`)
