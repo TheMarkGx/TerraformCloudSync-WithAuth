@@ -25,6 +25,7 @@ module "compute" {
   user_saves_bucket_name = module.storage.user_saves_bucket_name
   lambda_exec_role_arn   = module.iam.lambda_exec_role_arn
   environment = local.Environment
+  api_auto_deploy  = var.api_auto_deploy
 }
 
 module "storage" {

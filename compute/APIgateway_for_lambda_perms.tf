@@ -22,7 +22,7 @@
 //  source_arn    = "${aws_apigatewayv2_api.unity_api.execution_arn}/DELETE/delete"
 //}
 
-## HTTP API's do not support the above, only REST API's. 
+## HTTP API's do not support the above, only REST API's do. Commented here just in case there's a reason to switch later
 resource "aws_lambda_permission" "api_gateway_invoke" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"

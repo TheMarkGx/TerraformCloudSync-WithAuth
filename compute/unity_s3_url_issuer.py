@@ -1,3 +1,4 @@
+import base64
 import boto3
 import os
 import json
@@ -30,7 +31,7 @@ def main(event, context):
         key = f"{user_id}/master-save.dat"
 
         if method == "POST": ### If any more routing paths are added in APIgateway*.tf, add the handlers as an elif
-            return handle_upload(key)
+            return handle_upload(event, key)
         elif method == "GET":
             return handle_download(key)
         elif method == "DELETE":
@@ -42,29 +43,39 @@ def main(event, context):
         return error(500, str(e))
 
 
-def handle_upload(key):
-    try: #with max versions enforced...
-        versions = s3.list_object_versions(Bucket=bucket, Prefix=key).get("Versions", [])
+def handle_upload(event, key):
+    try:
+        # Get raw file content from request body
+        body = event.get("body", "")
+        if event.get("isBase64Encoded", False):
+            body = base64.b64decode(body)
+        else:
+            body = body.encode("utf-8")
+
+        # Apply version culling logic
+        version_data = s3.list_object_versions(Bucket=bucket, Prefix=key)
+        versions = version_data.get("Versions", []) or []        
+        versions = [v for v in versions if "VersionId" in v] # Filter out delete markers, just in case
         versions = sorted(versions, key=lambda v: v["LastModified"], reverse=True)
 
         if len(versions) > MAX_S3_VERSIONS:
             delete_keys = [{"Key": key, "VersionId": v["VersionId"]} for v in versions[MAX_S3_VERSIONS:]]
             s3.delete_objects(Bucket=bucket, Delete={"Objects": delete_keys})
-    except Exception as e: 
-            # Don't block upload URL just because cleanup failed, later can implement a regularly scheduled AWS based audit solution to correct these instances
-        print(f"Version cleanup failed: {e}")
 
-    url = s3.generate_presigned_url(
-        ClientMethod="put_object",
-        Params={
-            "Bucket": bucket,
-            "Key": key,
-            "ContentType": "application/octet-stream"  # 🔥 Required for header match
-        },
-        ExpiresIn=900
-    )
 
-    return response(200, {"url": url}) #200 = success
+        # Upload the file
+        s3.put_object(
+            Bucket=bucket,
+            Key=key,
+            Body=body,
+            ContentType="application/octet-stream"
+        )
+
+        return response(200, {"message": "Upload complete"})
+
+    except Exception as e:
+        print(f"Upload failed: {e}")
+        return error(500, str(e)) #200 = success
 
 def handle_download(key):
     try: # Check if object exists
@@ -87,16 +98,12 @@ def handle_download(key):
 def handle_delete(key):
     try:
         s3.delete_object(Bucket=bucket, Key=key)
+        return response(200, {"message": f"Deleted {key} from {bucket}."})
     except s3.exceptions.NoSuchKey:
-        return {
-            "statusCode": 404,
-            "body": json.dumps({"error": "Save file not found"})
-        }
+        return error(404, "Save file not found")
+    except Exception as e:
+        return error(500, f"Delete failed: {str(e)}")
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps({"message": "File deleted"})
-    }
 
 def response(status_code, body=None):
     return {

@@ -13,6 +13,4 @@ zip -j "$LAMBDA_ZIP" "$LAMBDA_SRC"
 
 terraform validate
 
-terraform plan -out=plan
-
-echo "ready to run -> terraform apply plan"
+echo "ready to run -> terraform apply"

@@ -13,3 +13,7 @@ variable "default_tags" {
 variable "environment" {
   type = string
 }
+
+variable "api_auto_deploy" { #Stage auto-deploy setting
+  default = true
+}
