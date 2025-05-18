@@ -10,27 +10,18 @@ MAX_S3_VERSIONS = int(os.getenv("MAX_S3_VERSIONS", 10)) #Configurable, how many 
 ### Supports minimal Exception logging to AWS Cloudwatch logs via print, later can change to import logging, and json dump into a logger object to log/trace the key that errored
 
 def main(event, context):
-    print("AWS Lambda triggered successfully")
     try:
-        headers = event.get("headers", {})
-        auth_header = headers.get("authorization") or headers.get("Authorization")
-
-        if not auth_header or not auth_header.startswith("Bearer "):
-            return error(401, "Missing or invalid token")
-
-        token = auth_header[7:]
-
-        # ---- Phase 1 Override dev-test-token: Accept it as a generic dev username, does NOT grant any special access----
-        if token == "dev-test-token":
-            user_id = "dev_user"
-        else:
-                    # Phase 2: insert JWT parsing and verification here
-            return error(403, "Unauthorized")
+        # Extract user ID from authorizer context
+        user_id = event.get("requestContext", {}) \
+                       .get("authorizer", {}) \
+                       .get("principalId")
+        if not user_id:
+            return error(401, "Unauthorized: No user identity found")
 
         method = event["requestContext"]["http"]["method"]
-        key = f"{user_id}/master-save.dat"
+        key = f"{user_id}/master-save.dat" # Here's where it tracks per user access
 
-        if method == "POST": ### If any more routing paths are added in APIgateway*.tf, add the handlers as an elif
+        if method == "POST":
             return handle_upload(event, key)
         elif method == "GET":
             return handle_download(key)

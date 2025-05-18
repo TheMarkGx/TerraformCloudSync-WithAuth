@@ -403,3 +403,7 @@ PLAN
 compute/*.zip
 terraform.tfstate
 terraform.tfstate.backup
+
+
+# Full Phase backups
+Phase*.zip

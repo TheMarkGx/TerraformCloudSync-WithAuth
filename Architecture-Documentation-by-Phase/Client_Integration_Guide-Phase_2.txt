@@ -1,0 +1,2 @@
+OAuth 2.0 for Mobile & Desktop Apps: https://developers.google.com/identity/protocols/oauth2/native-app
+Authenticate Using Google Sign-In and Unity: https://firebase.google.com/docs/auth/unity/google-signin

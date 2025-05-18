@@ -30,3 +30,12 @@ resource "aws_lambda_permission" "api_gateway_invoke" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.unity_api.execution_arn}/*/*"
 }
+
+resource "aws_lambda_permission" "allow_apigateway_to_invoke_authorizer" {
+  statement_id  = "AllowAPIGatewayInvokeAuthorizer"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.firebase_authorizer.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.unity_api.execution_arn}/*/authorizers/${aws_apigatewayv2_authorizer.firebase_authorizer.id}"
+}
+

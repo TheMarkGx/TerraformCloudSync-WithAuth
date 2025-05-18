@@ -1,0 +1,6 @@
+--2025-05-18 07:14:07--  https://files.pythonhosted.org/packages/ae/63/08fd4c2b31c78b651db82bb178ac3f32e08c10e6a5c6f6e446e7be8b1a30/PyJWT-2.8.0-py3-none-any.whl
+Resolving files.pythonhosted.org (files.pythonhosted.org)... 199.232.96.223, 2a04:4e42:58::223
+Connecting to files.pythonhosted.org (files.pythonhosted.org)|199.232.96.223|:443... connected.
+HTTP request sent, awaiting response... 404 Not Found
+2025-05-18 07:14:07 ERROR 404: Not Found.
+

@@ -21,11 +21,13 @@ module "iam" {
 
 module "compute" {
   source                 = "./compute"
+  suffix                 = random_id.suffix.hex
   default_tags           = local.default_tags
   user_saves_bucket_name = module.storage.user_saves_bucket_name
   lambda_exec_role_arn   = module.iam.lambda_exec_role_arn
-  environment = local.Environment
-  api_auto_deploy  = var.api_auto_deploy
+  environment            = local.Environment
+  api_auto_deploy        = var.api_auto_deploy
+  python_version         = var.python_version
 }
 
 module "storage" {
@@ -33,5 +35,5 @@ module "storage" {
   suffix       = random_id.suffix.hex
   default_tags = local.default_tags
   api_base_url = module.compute.api_gateway_endpoint
-  environment = local.Environment
+  environment  = local.Environment
 }

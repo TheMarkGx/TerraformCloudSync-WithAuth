@@ -1,16 +1,33 @@
 #!/bin/bash
+set -e
 
-set -e  # Exit on any error
+COMPUTE_DIR="compute"
+PACKAGE_DIR="$COMPUTE_DIR/package"
 
-LAMBDA_SRC="compute/unity_s3_url_issuer.py"
-LAMBDA_ZIP="compute/unity_s3_url_issuer.zip"
+# 1. Extract and clean up wheels in package (if any new ones were added)
+echo "Extracting and cleaning up wheels in $PACKAGE_DIR..."
+cd "$PACKAGE_DIR"
+for whl in *.whl; do
+    [ -e "$whl" ] && unzip -q "$whl"
+done
+rm -f *.whl
+cd ../..
 
-echo "Cleaning up old Lambda zip (if any)..."
-rm -f "$LAMBDA_ZIP"
+# 2. Build dependencies.zip for Lambda Layer
+echo "Zipping dependencies from $PACKAGE_DIR into $COMPUTE_DIR/dependencies.zip..."
+cd "$PACKAGE_DIR"
+zip -r ../dependencies.zip .
+cd ../..
 
-echo "Zipping Lambda source..."
-zip -j "$LAMBDA_ZIP" "$LAMBDA_SRC"
+# 3. Build Lambda zips (code only, no dependencies)
+echo "Zipping Lambda code..."
+cd "$COMPUTE_DIR"
+zip -j unity_s3_url_issuer.zip unity_s3_url_issuer.py
+zip -j firebase_authorizer.zip Firebase_Authorizer.py
+cd ..
+
+echo "dependencies.zip and Lambda zips are in $COMPUTE_DIR/"
 
 terraform validate
 
-echo "ready to run -> terraform apply"
+echo "Ready to run -> terraform apply"
