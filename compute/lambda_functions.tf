@@ -1,11 +1,11 @@
 resource "aws_lambda_function" "unity_s3_url_issuer" {
   function_name = "unity_s3_url_issuer_${var.suffix}"
   role          = var.lambda_exec_role_arn
-  handler       = "unity_s3_url_issuer_${var.suffix}.main"
+  handler       = "unity_s3_url_issuer.main"
   runtime       = var.python_version
 
-  filename         = "${path.module}/lambda_combined.zip"
-  source_code_hash = filebase64sha256("${path.module}/lambda_combined.zip")
+  filename         = "${path.module}/unity_s3_url_issuer.zip"
+  source_code_hash = filebase64sha256("${path.module}/unity_s3_url_issuer.zip")
   layers           = [aws_lambda_layer_version.dependencies.arn]
 
   environment { #For the lambda envi
@@ -20,19 +20,19 @@ resource "aws_lambda_function" "unity_s3_url_issuer" {
 
 
 resource "aws_lambda_function" "firebase_authorizer" {
-  function_name = "firebase_authorizer_${var.suffix}"
-  role          = aws_iam_role.lambda_exec_role.arn
+  function_name = "Firebase_Authorizer_${var.suffix}"
+  role          = var.lambda_exec_role_arn
   handler       = "Firebase_Authorizer.main"
   runtime       = var.python_version
 
-  filename         = "${path.module}/lambda_combined.zip"
-  source_code_hash = filebase64sha256("${path.module}/lambda_combined.zip")
+  filename         = "${path.module}/firebase_authorizer.zip"
+  source_code_hash = filebase64sha256("${path.module}/firebase_authorizer.zip")
   layers           = [aws_lambda_layer_version.dependencies.arn]
 
 
   environment {
     variables = {
-      USER_SAVES_BUCKET = module.storage.user_saves_bucket_name # Need this to combine with user.id from OAuth
+      USER_SAVES_BUCKET = var.user_saves_bucket_name # Need this to combine with user.id from OAuth
     }
   }
 

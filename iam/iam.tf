@@ -43,7 +43,7 @@ resource "aws_iam_policy" "lambda_authorizer_policy" {
         ],
         Effect = "Allow",
         Resource = [
-          "arn:aws:s3:::${module.storage.user_saves_bucket_name}/*"
+          "arn:aws:s3:::${var.user_saves_bucket_name}/*"
         ]
       }
     ]

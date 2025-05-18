@@ -10,13 +10,15 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region  = "us-east-1"
 }
 
 module "iam" {
-  source       = "./iam"
-  suffix       = random_id.suffix.hex
-  default_tags = local.default_tags
+  source                 = "./iam"
+  suffix                 = random_id.suffix.hex
+  default_tags           = local.default_tags
+  user_saves_bucket_name = module.storage.user_saves_bucket_name
+
 }
 
 module "compute" {
