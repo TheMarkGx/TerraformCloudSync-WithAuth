@@ -16,11 +16,8 @@ mkdir -p "$LAYER_BUILD_DIR/python"
 
 # 2. Build dependencies in AWS Lambda Python 3.11 Docker image
 echo "Building dependencies in AWS Lambda Python 3.11 Docker image..."
-docker run --rm \
-  -v "$PWD/$LAYER_BUILD_DIR/python":/opt \
-  -e PIP_TARGET=/opt \
-  public.ecr.aws/lambda/python:3.11 \
-  /bin/sh -c "pip install cryptography PyJWT"
+#add with user as owner
+docker run --rm --entrypoint "" -u "$(id -u):$(id -g)" -v "$PWD/$LAYER_BUILD_DIR/python:/opt/python" public.ecr.aws/lambda/python:3.11 /var/lang/bin/python3.11 -m pip install cryptography PyJWT --target /opt/python
 
 # 3. Zip the layer into dependencies.zip
 # AWS Lambda Layer needs top-level 'python/' directory
@@ -46,10 +43,10 @@ terraform validate
 
 rm -rf "$LAYER_BUILD_DIR" #Make sure its cleaned
 
-if [ "$SKIP_PLAN" = true ]; then
+if [ "$SKIP_PLAN" = false ]; then
   terraform plan -out=plan
-  echo "Ready to run 'terraform apply plan'"
+  echo "Ready to run 'terraform apply plan' (You can use -noplan to skip plan)"
 else
-  echo "Ready to run 'terraform apply' (You can use -noplan to skip plan)"
+  echo "Ready to run 'terraform apply'"
 fi
   
