@@ -1,30 +1,58 @@
 #!/bin/bash
 set -e
 
-SKIP_PLAN=false
-if [ "$1" = "noplan" ]; then
-  SKIP_PLAN=true
+#Help section
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+  echo "Usage: $0 [--update-deps] [noplan] [--help|-h]"
+  echo ""
+  echo "  --update-deps     Rebuild Python dependencies layer (only needed if any were added/changed, otherwise this saves time)"
+  echo "  noplan            Skip running 'terraform plan' (just build zips and validate)"
+  echo "  --help, -h        Show this help message and exit"
+  echo ""
+  echo "Examples:"
+  echo "  $0                        # Python build and plan"
+  echo "  $0 --update-deps          # Rebuild Lambda code zips, AND dependency layer via pip & docker file"
+  echo "  $0 noplan                 # Build lambda pythons only, skip 'terraform plan'"
+  echo "  $0 --update-deps noplan   # Build everything but don't run plan"
+  exit 0
 fi
+
+SKIP_PLAN=false
+UPDATE-DEPS=false
+
+# Parse flags
+for arg in "$@"; do
+  if [ "$arg" = "noplan" ]; then
+    SKIP_PLAN=true
+  fi
+  if [ "$arg" = "--skip-deps" ]; then
+    SKIP_DEPS=true
+  fi
+done
 
 COMPUTE_DIR="compute"
 LAYER_BUILD_DIR="$COMPUTE_DIR/layer_build"
 
-# 1. Clean previous builds
-echo "Cleaning old layer build..."
-rm -rf "$LAYER_BUILD_DIR"
-mkdir -p "$LAYER_BUILD_DIR/python"
+if [ "$UPDATE-DEPS" = true ]; then
+  # 1. Clean previous builds
+  echo "Cleaning old layer build..."
+  rm -rf "$LAYER_BUILD_DIR"
+  mkdir -p "$LAYER_BUILD_DIR/python"
 
-# 2. Build dependencies in AWS Lambda Python 3.11 Docker image
-echo "Building dependencies in AWS Lambda Python 3.11 Docker image..."
-#add with user as owner
-docker run --rm --entrypoint "" -u "$(id -u):$(id -g)" -v "$PWD/$LAYER_BUILD_DIR/python:/opt/python" public.ecr.aws/lambda/python:3.11 /var/lang/bin/python3.11 -m pip install cryptography PyJWT --target /opt/python
+  # 2. Build dependencies in AWS Lambda Python 3.11 Docker image
+  echo "Building dependencies in AWS Lambda Python 3.11 Docker image..."
+  #add with user as owner
+  docker run --rm --entrypoint "" -u "$(id -u):$(id -g)" -v "$PWD/$LAYER_BUILD_DIR/python:/opt/python" public.ecr.aws/lambda/python:3.11 /var/lang/bin/python3.11 -m pip install cryptography PyJWT --target /opt/python
 
-# 3. Zip the layer into dependencies.zip
-# AWS Lambda Layer needs top-level 'python/' directory
-echo "Zipping layer (with python/ wrapper) to compute/dependencies.zip..."
-cd "$LAYER_BUILD_DIR"
-zip -r ../dependencies.zip python
-cd - >/dev/null
+  # 3. Zip the layer into dependencies.zip
+  # AWS Lambda Layer needs top-level 'python/' directory
+  echo "Zipping layer (with python/ wrapper) to compute/dependencies.zip..."
+  cd "$LAYER_BUILD_DIR"
+  zip -r ../dependencies.zip python
+  cd - >/dev/null
+else
+  echo "Skipping dependency layer build."
+fi
 
 # 4. Build Lambda zips
 cd "$COMPUTE_DIR"
