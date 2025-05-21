@@ -30,6 +30,7 @@ module "compute" {
   environment            = local.Environment
   api_auto_deploy        = var.api_auto_deploy
   python_version         = var.python_version
+  region = var.region
 }
 
 module "storage" {

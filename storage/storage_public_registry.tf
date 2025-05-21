@@ -14,10 +14,10 @@ resource "aws_s3_object" "api_config_json" {
   content_type = "application/json"
 
   content = jsonencode({
-    api_base_url = "${var.api_base_url}/${var.environment}",
-    upload_path    = "/upload",
-    download_path  = "/download",
-    delete_path    = "/delete"
+    api_base_url  = var.api_base_url
+    upload_path   = "/upload",
+    download_path = "/download",
+    delete_path   = "/delete"
   })
 
 }
@@ -35,6 +35,7 @@ resource "aws_s3_bucket_policy" "public_config_read" {
       Resource  = "${aws_s3_bucket.api_registry.arn}/*"
     }]
   })
+  depends_on = [aws_s3_bucket_public_access_block.api_registry_public_access]
 }
 
 ### Registry bucket specifically needs to be truly public as it hosts only a public URL to act as a DNS server for any/all registered terraform workspace deployments

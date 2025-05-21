@@ -1,58 +1,37 @@
-resource "aws_apigatewayv2_api" "unity_api" {
-  name          = "unity-api_${var.suffix}"
-  protocol_type = "HTTP"
-  tags          = var.default_tags
+resource "aws_api_gateway_rest_api" "unity_api" {
+  name        = "unity-api-${var.suffix}"
+  description = "REST API for Unity Cloud Integration"
+  tags        = var.default_tags
 }
 
 # DOCS: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_authorizer
-resource "aws_apigatewayv2_authorizer" "firebase_authorizer" {
-  name             = "firebase-authorizer_${var.suffix}"
-  api_id           = aws_apigatewayv2_api.unity_api.id
-  authorizer_type  = "REQUEST"
-  authorizer_uri   = aws_lambda_function.firebase_authorizer.invoke_arn
-  identity_sources = ["$request.header.Authorization"]
+resource "aws_api_gateway_authorizer" "firebase_authorizer" {
+  name                                 = "firebase-authorizer-${var.suffix}"
+  rest_api_id                          = aws_api_gateway_rest_api.unity_api.id
+  authorizer_uri                       = aws_lambda_function.firebase_authorizer.invoke_arn
+  type                                 = "TOKEN"
+  identity_source                      = "method.request.header.Authorization"
+  authorizer_result_ttl_in_seconds     = 300
 }
-
-
-# Using this second integration to dedicate to the handler lambda rather than direct S3 PUT
-# Partially modularized here for easier tracing/separation of concerns regarding uploads
-resource "aws_apigatewayv2_integration" "general_lambda_integration" {
-  api_id                 = aws_apigatewayv2_api.unity_api.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.unity_s3_url_issuer.invoke_arn
-  integration_method     = "POST"
-  payload_format_version = "2.0"
-}
-
-resource "aws_apigatewayv2_integration" "upload_integration" {
-  api_id                 = aws_apigatewayv2_api.unity_api.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.unity_s3_url_issuer.invoke_arn
-  integration_method     = "POST"
-  payload_format_version = "2.0"
-}
-
-###
 ###
 
-resource "aws_apigatewayv2_deployment" "unity_api_deploy" {
-  api_id = aws_apigatewayv2_api.unity_api.id
-  #description = "Force redeploy ${timestamp()}"  # this forces a new deployment, terraform sees this object changed
-  depends_on = [ #ensures that API Gateway redeploys only after all routes/integrations
-    aws_apigatewayv2_route.upload_route,
-    aws_apigatewayv2_route.download_route,
-    aws_apigatewayv2_route.delete_route,
-    aws_apigatewayv2_integration.general_lambda_integration,
-    aws_apigatewayv2_integration.upload_integration
+# Deployment and staging
+# Create a new deployment for every apply when manual deploy is enabled
+resource "aws_api_gateway_deployment" "unity_api_deploy" {
+  rest_api_id = aws_api_gateway_rest_api.unity_api.id
+  description = local.deployment_description
+
+  depends_on = [
+    aws_api_gateway_integration.upload_integration,
+    aws_api_gateway_integration.download_integration,
+    aws_api_gateway_integration.delete_integration
   ]
 }
 
-resource "aws_apigatewayv2_stage" "unity_stage" {
-  api_id      = aws_apigatewayv2_api.unity_api.id
-  name        = "${var.environment}_${var.suffix}"
-  auto_deploy = var.api_auto_deploy
-
-  # Only applies if auto_deploy is false, as it would be needed only then
-  deployment_id = var.api_auto_deploy ? null : aws_apigatewayv2_deployment.unity_api_deploy.id
+# Explicit stage resource for more control
+resource "aws_api_gateway_stage" "unity_stage" {
+  stage_name    = "${var.environment}_${var.suffix}"
+  rest_api_id   = aws_api_gateway_rest_api.unity_api.id
+  deployment_id = aws_api_gateway_deployment.unity_api_deploy.id
 }
-
+###

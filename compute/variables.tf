@@ -29,3 +29,12 @@ variable "python_version" {
   description = "This is the python version required by all resources and dependencies"
   type = string
 }
+
+# This local changes value every apply if auto_deploy is true
+locals {
+  deployment_description = var.api_auto_deploy ? "Static deploy" : "Force deploy at ${timestamp()}"
+}
+
+variable "region" {
+  type = string
+}

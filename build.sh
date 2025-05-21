@@ -1,34 +1,55 @@
 #!/bin/bash
 set -e
 
+SKIP_PLAN=false
+if [ "$1" = "noplan" ]; then
+  SKIP_PLAN=true
+fi
+
 COMPUTE_DIR="compute"
-PACKAGE_DIR="$COMPUTE_DIR/package"
+LAYER_BUILD_DIR="$COMPUTE_DIR/layer_build"
 
-# 1. Extract and clean up wheels in package (if any new ones were added)
-echo "Extracting and cleaning up wheels in $PACKAGE_DIR..."
-cd "$PACKAGE_DIR"
-for whl in *.whl; do
-    [ -e "$whl" ] && unzip -q "$whl"
-done
-rm -f *.whl
-cd ../..
+# 1. Clean previous builds
+echo "Cleaning old layer build..."
+rm -rf "$LAYER_BUILD_DIR"
+mkdir -p "$LAYER_BUILD_DIR/python"
 
-# 2. Build dependencies.zip for Lambda Layer
-echo "Zipping dependencies from $PACKAGE_DIR into $COMPUTE_DIR/dependencies.zip..."
-cd "$PACKAGE_DIR"
-zip -r ../dependencies.zip .
-cd ../..
+# 2. Build dependencies in AWS Lambda Python 3.11 Docker image
+echo "Building dependencies in AWS Lambda Python 3.11 Docker image..."
+docker run --rm \
+  -v "$PWD/$LAYER_BUILD_DIR/python":/opt \
+  -e PIP_TARGET=/opt \
+  public.ecr.aws/lambda/python:3.11 \
+  /bin/sh -c "pip install cryptography PyJWT"
 
-# 3. Build Lambda zips (code only, no dependencies)
-echo "Zipping Lambda code..."
+# 3. Zip the layer into dependencies.zip
+# AWS Lambda Layer needs top-level 'python/' directory
+echo "Zipping layer (with python/ wrapper) to compute/dependencies.zip..."
+cd "$LAYER_BUILD_DIR"
+zip -r ../dependencies.zip python
+cd - >/dev/null
+
+# 4. Build Lambda zips
 cd "$COMPUTE_DIR"
 zip -j unity_s3_url_issuer.zip unity_s3_url_issuer.py
 zip -j firebase_authorizer.zip Firebase_Authorizer.py
-cd ..
+cd - >/dev/null #need to go back to run terraform cmds
 
-echo "dependencies.zip and Lambda zips are in $COMPUTE_DIR/"
+# 5. output summary
+echo "Built in $COMPUTE_DIR:"
+echo "  - dependencies.zip"
+echo "  - unity_s3_url_issuer.zip"
+echo "  - firebase_authorizer.zip"
 
+terraform fmt
 terraform validate
-terraform plan -out=plan
 
-echo "Ready to run -> terraform apply plan"
+rm -rf "$LAYER_BUILD_DIR" #Make sure its cleaned
+
+if [ "$SKIP_PLAN" = true ]; then
+  terraform plan -out=plan
+  echo "Ready to run 'terraform apply plan'"
+else
+  echo "Ready to run 'terraform apply' (You can use -noplan to skip plan)"
+fi
+  

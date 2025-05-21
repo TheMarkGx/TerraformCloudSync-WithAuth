@@ -399,7 +399,7 @@ FodyWeavers.xsd
 *.sln.iml
 
 # Custom/Phase 1 supporting files/Python zips
-PLAN
+plan
 compute/*.zip
 terraform.tfstate
 terraform.tfstate.backup

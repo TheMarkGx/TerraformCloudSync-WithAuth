@@ -1,2 +1,75 @@
+Phase 2: Client Integration Guide
+1. Authentication
+Continue using Google Sign-In via Firebase Auth in Unity.
+
+Ensure the Firebase ID token is refreshed and sent with every cloud API call.
+
+csharp
+Copy
+Edit
+// Example for UnityWebRequest:
+request.SetRequestHeader("Authorization", "Bearer " + idToken);
+2. User Folder Mapping
+The backend now uses your Firebase UID for S3 foldering:
+
+Example save path: s3://your-bucket/<user-uid>/master-save.dat
+
+Never send or expect plain emails in URLs/paths.
+
+3. Save/Load with Versioning or Tagging
+You may now send additional query parameters or request body fields to:
+
+Specify a save slot name, version tag, or checkpoint label.
+
+Example:
+
+json
+{
+  "slot": "slot1",
+  "tag": "pre-bossfight"
+}
+Unity client should provide UI to select or tag save slots if this feature is enabled.
+
+4. Admin/Analytics Endpoint Usage
+(If implemented) Admin client or tool must authenticate as a privileged user to access /admin/analytics.
+
+Never expose admin credentials or tokens in the public client.
+
+5. Error Handling
+Be prepared for:
+
+401 Unauthorized (token expired or not attached)
+
+404 Not Found (no save exists for slot)
+
+500 Internal Server Error (backend bug or AWS issue)
+
+Display meaningful error messages or retry options in the Unity UI.
+
+6. Best Practices
+Always call a token refresh before a save/load if the user has been logged in for a while.
+
+After updating the Unity client, ensure your config registry (S3 config.json) points to the correct, latest API Gateway base URL and environment.
+
+Example Unity Integration Snippet
+csharp
+Copy
+Edit
+IEnumerator UploadSave(string data, string slot, string tag) {
+    string url = registry.api_base_url + "/upload";
+    UnityWebRequest request = new UnityWebRequest(url, "POST");
+    request.SetRequestHeader("Authorization", "Bearer " + idToken);
+    // Add any additional metadata as needed
+    // ...
+    // Send data
+    // ...
+}
+Troubleshooting
+401 Unauthorized: Check if the authorizer is attached and the token is fresh.
+
+No handler logs: Re-deploy the API Gateway stage, check integration and permissions.
+
+Manual attach required: After manual changes in the AWS Console, always redeploy the stage.
+
 OAuth 2.0 for Mobile & Desktop Apps: https://developers.google.com/identity/protocols/oauth2/native-app
 Authenticate Using Google Sign-In and Unity: https://firebase.google.com/docs/auth/unity/google-signin
