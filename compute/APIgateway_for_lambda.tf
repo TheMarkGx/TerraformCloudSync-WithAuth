@@ -11,7 +11,10 @@ resource "aws_api_gateway_authorizer" "firebase_authorizer" {
   authorizer_uri                       = aws_lambda_function.firebase_authorizer.invoke_arn
   type                                 = "TOKEN"
   identity_source                      = "method.request.header.Authorization"
-  authorizer_result_ttl_in_seconds     = 300
+  # No high rate of traffic is needing support for state file storage; cache interferes with HTTP method changes
+  # Cache lowers authorization calls per session but in this case I need support for multiple methods within any time frame
+  # If support is ever needed for high frequency calls, make new route(s) not connected to this auth
+  authorizer_result_ttl_in_seconds     = 0 
 }
 ###
 
