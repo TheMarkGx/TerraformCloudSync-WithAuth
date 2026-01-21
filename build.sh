@@ -1,39 +1,39 @@
 #!/bin/bash
 set -e
 
+SKIP_PLAN=false
+UPDATE_DEPS=false
+
 #Help section
 if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-  echo "Usage: $0 [--update-deps] [noplan] [--help|-h]"
+  echo "Usage: $0 [--update_deps] [noplan] [--help|-h]"
   echo ""
-  echo "  --update-deps     Rebuild Python dependencies layer (only needed if any were added/changed, otherwise this saves time)"
+  echo "  --update_deps     Rebuild Python dependencies layer (only needed if any were added/changed, otherwise this saves time)"
   echo "  noplan            Skip running 'terraform plan' (just build zips and validate)"
   echo "  --help, -h        Show this help message and exit"
   echo ""
   echo "Examples:"
   echo "  $0                        # Python build and plan"
-  echo "  $0 --update-deps          # Rebuild Lambda code zips, AND dependency layer via pip & docker file"
+  echo "  $0 --update_deps          # Rebuild Lambda code zips, AND dependency layer via pip & docker file"
   echo "  $0 noplan                 # Build lambda pythons only, skip 'terraform plan'"
-  echo "  $0 --update-deps noplan   # Build everything but don't run plan"
+  echo "  $0 --update_deps noplan   # Build everything but don't run plan"
   exit 0
 fi
-
-SKIP_PLAN=false
-UPDATE-DEPS=false
 
 # Parse flags
 for arg in "$@"; do
   if [ "$arg" = "noplan" ]; then
     SKIP_PLAN=true
   fi
-  if [ "$arg" = "--skip-deps" ]; then
-    SKIP_DEPS=true
+  if [ "$arg" = "--update_deps" ]; then
+    UPDATE_DEPS=true
   fi
 done
 
 COMPUTE_DIR="compute"
 LAYER_BUILD_DIR="$COMPUTE_DIR/layer_build"
 
-if [ "$UPDATE-DEPS" = true ]; then
+if [ "$UPDATE_DEPS" = true ]; then
   # 1. Clean previous builds
   echo "Cleaning old layer build..."
   rm -rf "$LAYER_BUILD_DIR"
