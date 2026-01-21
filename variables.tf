@@ -14,3 +14,15 @@ variable "region" {
   type    = string
   default = "us-east-1"
 }
+
+variable "suffix" {
+  type        = string
+  description = "Optional deployment suffix. If provided (from bootstrap), it is used. Otherwise a random suffix will be generated in locals."
+  default     = null
+}
+
+variable "execution_plane" {
+  type        = string
+  description = "Execution plane for this deployment (local | cicd)"
+  default     = "local"
+}

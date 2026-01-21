@@ -10,13 +10,12 @@ terraform {
 }
 
 provider "aws" {
-  region  = "us-east-1"
-  profile = "default"
+  region = "us-east-1"
 }
 
 module "iam" {
   source                 = "./iam"
-  suffix                 = random_id.suffix.hex
+  suffix                 = local.Suffix
   default_tags           = local.default_tags
   user_saves_bucket_name = module.storage.user_saves_bucket_name
 
@@ -24,7 +23,7 @@ module "iam" {
 
 module "compute" {
   source                 = "./compute"
-  suffix                 = random_id.suffix.hex
+  suffix                 = local.Suffix
   default_tags           = local.default_tags
   user_saves_bucket_name = module.storage.user_saves_bucket_name
   lambda_exec_role_arn   = module.iam.lambda_exec_role_arn
@@ -36,7 +35,7 @@ module "compute" {
 
 module "storage" {
   source       = "./storage"
-  suffix       = random_id.suffix.hex
+  suffix       = local.Suffix
   default_tags = local.default_tags
   api_base_url = module.compute.api_gateway_endpoint
   environment  = local.Environment

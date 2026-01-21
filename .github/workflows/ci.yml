@@ -1,0 +1,48 @@
+name: terraform-ci
+
+on:
+  pull_request:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS creds (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/${{ vars.GITHUB_OIDC_ROLE_NAME }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform validate (bootstrap)
+        run: |
+          terraform -chdir=bootstrap init
+          terraform -chdir=bootstrap validate
+
+      - name: Terraform validate (main)
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Build Lambda package
+        run: |
+          chmod +x ./build-root.sh
+          ./build-root.sh noplan
+
+      # NOTE: plan will be added after backend is wired to real S3 state via init params
+      - name: Terraform plan (main)
+        run: |
+          terraform plan
