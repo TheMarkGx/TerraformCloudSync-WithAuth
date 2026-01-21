@@ -48,6 +48,11 @@ jobs:
 
           ls -lah "$COMPUTE_DIR/dependencies.zip"
 
+      - name: Zip Lambda handlers
+        run: |
+          zip -j compute/Firebase_Authorizer.zip Firebase_Authorizer.py
+          zip -j compute/unity_s3_url_issuer.zip unity_s3_url_issuer.py
+
       - name: Terraform fmt
         run: terraform fmt -check -recursive
 
