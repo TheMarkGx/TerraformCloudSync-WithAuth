@@ -8,5 +8,5 @@ variable "suffix" {
 
 variable "user_saves_bucket_name" {
   description = "Pulled from storage module"
-  type = string
+  type        = string
 }
