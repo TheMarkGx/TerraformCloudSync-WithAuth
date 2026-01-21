@@ -51,7 +51,7 @@ jobs:
 
       - name: Zip Lambda handlers
         run: |
-          zip -j compute/Firebase_Authorizer.zip compute/Firebase_Authorizer.py
+          zip -j compute/firebase_authorizer.zip compute/Firebase_Authorizer.py
           zip -j compute/unity_s3_url_issuer.zip compute/unity_s3_url_issuer.py
 
       - name: Bootstrap (create tfstate bucket + lock table)
