@@ -67,11 +67,6 @@ jobs:
           echo "AWS_REGION=$(terraform -chdir=bootstrap output -raw aws_region)" >> $GITHUB_ENV
           echo "SUFFIX=$(terraform -chdir=bootstrap output -raw suffix)" >> $GITHUB_ENV
 
-      - name: Build Lambda package
-        run: |
-          chmod +x ./build-root.sh
-          ./build-root.sh noplan
-
       - name: Terraform init (main backend to S3)
         run: |
           terraform init \
@@ -79,6 +74,7 @@ jobs:
             -backend-config="dynamodb_table=${LOCK_TABLE}" \
             -backend-config="region=${AWS_REGION}" \
             -backend-config="key=dev/terraform.tfstate"
+          terraform fmt
 
       - name: Terraform apply (main)
         run: |

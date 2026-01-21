@@ -64,12 +64,8 @@ jobs:
       - name: Terraform validate (main)
         run: |
           terraform init -backend=false
+          terraform fmt
           terraform validate
-
-      - name: Build Lambda package
-        run: |
-          chmod +x ./build-root.sh
-          ./build-root.sh noplan
 
       # NOTE: plan will be added after backend is wired to real S3 state via init params
       - name: Terraform plan (main)
