@@ -1,0 +1,66 @@
+name: terraform-ci
+
+on:
+  pull_request:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS creds (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.ACTIONS_OIDC_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Setup Python (runner-native)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: compute/requirements.txt
+
+      - name: Build compute/dependencies.zip (no Docker)
+        run: |
+          set -euo pipefail
+
+          COMPUTE_DIR="compute"
+          LAYER_BUILD_DIR="$COMPUTE_DIR/layer_build"
+
+          rm -rf "$LAYER_BUILD_DIR"
+          mkdir -p "$LAYER_BUILD_DIR/python"
+
+          python -m pip install --upgrade pip
+          python -m pip install cryptography PyJWT -t "$LAYER_BUILD_DIR/python"
+
+          (cd "$LAYER_BUILD_DIR" && zip -r ../dependencies.zip python)
+          ls -lah "$COMPUTE_DIR/dependencies.zip"
+
+      - name: Zip Lambda handlers
+        run: |
+          zip -j compute/firebase_authorizer.zip compute/Firebase_Authorizer.py
+          zip -j compute/unity_s3_url_issuer.zip compute/unity_s3_url_issuer.py
+
+      - name: Terraform fmt (repo-wide)
+        run: terraform fmt -check -recursive
+
+      - name: Terraform validate (bootstrap)
+        run: |
+          terraform -chdir=bootstrap init -backend=false
+          terraform -chdir=bootstrap validate
+
+      - name: Terraform validate (main)
+        run: |
+          terraform init -backend=false
+          terraform validate

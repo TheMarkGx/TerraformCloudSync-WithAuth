@@ -6,6 +6,6 @@ resource "aws_lambda_layer_version" "dependencies" {
   filename            = "${path.module}/dependencies.zip"
   layer_name          = "dependencies_${var.suffix}"
   compatible_runtimes = [var.python_version]
-  source_code_hash = filebase64sha256("${path.module}/dependencies.zip")
+  source_code_hash    = filebase64sha256("${path.module}/dependencies.zip")
 
 }

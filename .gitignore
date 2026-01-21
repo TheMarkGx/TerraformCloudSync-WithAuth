@@ -404,6 +404,9 @@ compute/*.zip
 terraform.tfstate
 terraform.tfstate.backup
 
+# CI/CD supporting files
+cicd-bootstrap/terraform.tfvars
+
 
 # Full Phase backups
 Phase*.zip

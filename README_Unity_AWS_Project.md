@@ -33,6 +33,7 @@ Provide a simple visual showing how Unity communicates with AWS services (S3, La
 - AWS (S3, Lambda, API Gateway, IAM)
 - Terraform
 - JSON / HTTP
+- Github Actions
 
 ## Infrastructure Setup (Terraform)
 
@@ -75,6 +76,9 @@ Step-by-step:
 - Setup
 - Testing
 - Cleanup
+
+**SEE CI-CD-Setup.md for instructions on how to run and maintain the pipeline support for this project**
+
 
 ## License / Credit / Contact
 

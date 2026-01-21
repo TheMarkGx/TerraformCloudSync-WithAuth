@@ -6,15 +6,15 @@ resource "aws_api_gateway_rest_api" "unity_api" {
 
 # DOCS: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_authorizer
 resource "aws_api_gateway_authorizer" "firebase_authorizer" {
-  name                                 = "firebase-authorizer-${var.suffix}"
-  rest_api_id                          = aws_api_gateway_rest_api.unity_api.id
-  authorizer_uri                       = aws_lambda_function.firebase_authorizer.invoke_arn
-  type                                 = "TOKEN"
-  identity_source                      = "method.request.header.Authorization"
+  name            = "firebase-authorizer-${var.suffix}"
+  rest_api_id     = aws_api_gateway_rest_api.unity_api.id
+  authorizer_uri  = aws_lambda_function.firebase_authorizer.invoke_arn
+  type            = "TOKEN"
+  identity_source = "method.request.header.Authorization"
   # No high rate of traffic is needing support for state file storage; cache interferes with HTTP method changes
   # Cache lowers authorization calls per session but in this case I need support for multiple methods within any time frame
   # If support is ever needed for high frequency calls, make new route(s) not connected to this auth
-  authorizer_result_ttl_in_seconds     = 0 
+  authorizer_result_ttl_in_seconds = 0
 }
 ###
 

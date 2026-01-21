@@ -12,22 +12,22 @@ variable "default_tags" {
 
 variable "environment" {
   description = "Name of the terraform workspace"
-  type = string
+  type        = string
 }
 
 variable "api_auto_deploy" {
   description = "Stage auto-deploy setting"
-  default = true
+  default     = true
 }
 
 variable "suffix" {
   description = "Random suffix for globally-unique resource names"
-  type = string
+  type        = string
 }
 
 variable "python_version" {
   description = "This is the python version required by all resources and dependencies"
-  type = string
+  type        = string
 }
 
 # This local changes value every apply if auto_deploy is true
