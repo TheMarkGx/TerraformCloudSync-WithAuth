@@ -46,7 +46,6 @@ jobs:
           python -m pip install cryptography PyJWT -t "$LAYER_BUILD_DIR/python"
 
           (cd "$LAYER_BUILD_DIR" && zip -r ../dependencies.zip python)
-
           ls -lah "$COMPUTE_DIR/dependencies.zip"
 
       - name: Zip Lambda handlers
@@ -54,27 +53,30 @@ jobs:
           zip -j compute/firebase_authorizer.zip compute/Firebase_Authorizer.py
           zip -j compute/unity_s3_url_issuer.zip compute/unity_s3_url_issuer.py
 
-      - name: Bootstrap (create tfstate bucket + lock table)
+      - name: Terraform fmt (repo-wide)
+        run: terraform fmt -check -recursive
+
+      - name: Bootstrap validate + apply (create tfstate bucket + lock table)
         run: |
           terraform -chdir=bootstrap init
+          terraform -chdir=bootstrap validate
           terraform -chdir=bootstrap apply -auto-approve
 
       - name: Capture bootstrap outputs
-        id: bs
         run: |
           echo "TFSTATE_BUCKET=$(terraform -chdir=bootstrap output -raw tfstate_bucket_name)" >> $GITHUB_ENV
           echo "LOCK_TABLE=$(terraform -chdir=bootstrap output -raw lock_table_name)" >> $GITHUB_ENV
           echo "AWS_REGION=$(terraform -chdir=bootstrap output -raw aws_region)" >> $GITHUB_ENV
           echo "SUFFIX=$(terraform -chdir=bootstrap output -raw suffix)" >> $GITHUB_ENV
 
-      - name: Terraform init (main backend to S3)
+      - name: Terraform init + validate (main backend to S3)
         run: |
           terraform init \
             -backend-config="bucket=${TFSTATE_BUCKET}" \
             -backend-config="dynamodb_table=${LOCK_TABLE}" \
             -backend-config="region=${AWS_REGION}" \
             -backend-config="key=dev/terraform.tfstate"
-          terraform fmt
+          terraform validate
 
       - name: Terraform apply (main)
         run: |

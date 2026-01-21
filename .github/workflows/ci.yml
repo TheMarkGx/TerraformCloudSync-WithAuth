@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  plan:
+  checks:
     runs-on: ubuntu-latest
 
     steps:
@@ -45,7 +45,6 @@ jobs:
           python -m pip install cryptography PyJWT -t "$LAYER_BUILD_DIR/python"
 
           (cd "$LAYER_BUILD_DIR" && zip -r ../dependencies.zip python)
-
           ls -lah "$COMPUTE_DIR/dependencies.zip"
 
       - name: Zip Lambda handlers
@@ -53,21 +52,15 @@ jobs:
           zip -j compute/firebase_authorizer.zip compute/Firebase_Authorizer.py
           zip -j compute/unity_s3_url_issuer.zip compute/unity_s3_url_issuer.py
 
-      - name: Terraform fmt
+      - name: Terraform fmt (repo-wide)
         run: terraform fmt -check -recursive
 
       - name: Terraform validate (bootstrap)
         run: |
-          terraform -chdir=bootstrap init
+          terraform -chdir=bootstrap init -backend=false
           terraform -chdir=bootstrap validate
 
       - name: Terraform validate (main)
         run: |
           terraform init -backend=false
-          terraform fmt
           terraform validate
-
-      # NOTE: plan will be added after backend is wired to real S3 state via init params
-      - name: Terraform plan (main)
-        run: |
-          terraform plan
