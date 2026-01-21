@@ -50,8 +50,8 @@ jobs:
 
       - name: Zip Lambda handlers
         run: |
-          zip -j compute/Firebase_Authorizer.zip Firebase_Authorizer.py
-          zip -j compute/unity_s3_url_issuer.zip unity_s3_url_issuer.py
+          zip -j compute/Firebase_Authorizer.zip compute/Firebase_Authorizer.py
+          zip -j compute/unity_s3_url_issuer.zip compute/unity_s3_url_issuer.py
 
       - name: Terraform fmt
         run: terraform fmt -check -recursive
