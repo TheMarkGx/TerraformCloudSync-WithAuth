@@ -10,3 +10,7 @@ variable "user_saves_bucket_name" {
   description = "Pulled from storage module"
   type        = string
 }
+
+variable "environment" {
+  type = string
+}
