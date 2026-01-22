@@ -1,12 +1,12 @@
 resource "aws_api_gateway_rest_api" "unity_api" {
-  name        = "unity-api-${var.suffix}"
+  name        = "${var.environment}-unity-api-${var.suffix}"
   description = "REST API for Unity Cloud Integration"
   tags        = var.default_tags
 }
 
 # DOCS: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_authorizer
 resource "aws_api_gateway_authorizer" "firebase_authorizer" {
-  name            = "firebase-authorizer-${var.suffix}"
+  name            = "${var.environment}-firebase-authorizer-${var.suffix}"
   rest_api_id     = aws_api_gateway_rest_api.unity_api.id
   authorizer_uri  = aws_lambda_function.firebase_authorizer.invoke_arn
   type            = "TOKEN"

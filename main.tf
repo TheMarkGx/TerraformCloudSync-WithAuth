@@ -18,7 +18,7 @@ module "iam" {
   suffix                 = local.Suffix
   default_tags           = local.default_tags
   user_saves_bucket_name = module.storage.user_saves_bucket_name
-
+  environment = local.Environment
 }
 
 module "compute" {
