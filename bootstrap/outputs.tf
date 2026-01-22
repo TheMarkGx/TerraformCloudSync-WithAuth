@@ -9,3 +9,7 @@ output "tfstate_bucket_name" {
 output "lock_table_name" {
   value = aws_dynamodb_table.tf_locks.name
 }
+
+output "aws_region" {
+  value = var.aws_region
+}

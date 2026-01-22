@@ -30,6 +30,24 @@ for arg in "$@"; do
   fi
 done
 
+# Detect whether CI/CD backend is configured
+REMOTE_MODE=false
+if [[ -n "${TFSTATE_BUCKET:-}" && -n "${LOCK_TABLE:-}" && -n "${AWS_REGION:-}" ]]; then
+  REMOTE_MODE=true
+fi
+
+if [[ "$REMOTE_MODE" == true ]]; then
+  echo "==> Using REMOTE backend (S3 + DynamoDB)"
+  terraform init -reconfigure \
+    -backend-config="bucket=${TFSTATE_BUCKET}" \
+    -backend-config="dynamodb_table=${LOCK_TABLE}" \
+    -backend-config="region=${AWS_REGION}" \
+    -backend-config="key=${TFSTATE_KEY:-${TF_WORKSPACE:-default}/terraform.tfstate}"
+else
+  echo "==> Using LOCAL backend"
+  terraform init -reconfigure -backend=false
+fi
+
 COMPUTE_DIR="compute"
 LAYER_BUILD_DIR="$COMPUTE_DIR/layer_build"
 
@@ -48,6 +66,7 @@ if [ "$UPDATE_DEPS" = true ]; then
   # AWS Lambda Layer needs top-level 'python/' directory
   echo "Zipping layer (with python/ wrapper) to compute/dependencies.zip..."
   cd "$LAYER_BUILD_DIR"
+  rm -f ../dependencies.zip
   zip -r ../dependencies.zip python
   cd - >/dev/null
 else
@@ -56,6 +75,7 @@ fi
 
 # 4. Build Lambda zips
 cd "$COMPUTE_DIR"
+rm -f unity_s3_url_issuer.zip firebase_authorizer.zip
 zip -j unity_s3_url_issuer.zip unity_s3_url_issuer.py
 zip -j firebase_authorizer.zip Firebase_Authorizer.py
 cd - >/dev/null #need to go back to run terraform cmds
@@ -66,7 +86,7 @@ echo "  - dependencies.zip"
 echo "  - unity_s3_url_issuer.zip"
 echo "  - firebase_authorizer.zip"
 
-terraform fmt
+terraform fmt -recursive
 terraform validate
 
 rm -rf "$LAYER_BUILD_DIR" #Make sure its cleaned

@@ -1,9 +1,11 @@
 terraform {
+  backend "s3" {}
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.4" #avoid 6 for now, it just released as a beta a week ago
     }
+    
   }
 
   required_version = ">= 1.5.0"
