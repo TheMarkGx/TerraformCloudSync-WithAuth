@@ -69,8 +69,8 @@ resource "aws_iam_role_policy_attachment" "terraform_deploy" {
 
 data "aws_iam_policy_document" "terraform_deploy" {
   statement {
-    sid     = "TerraformReadBasics"
-    effect  = "Allow"
+    sid    = "TerraformReadBasics"
+    effect = "Allow"
     actions = [
       "sts:GetCallerIdentity",
       "ec2:DescribeRegions"
@@ -80,8 +80,8 @@ data "aws_iam_policy_document" "terraform_deploy" {
 
   # S3: state + artifacts/buckets managed by this repo
   statement {
-    sid     = "S3Management"
-    effect  = "Allow"
+    sid    = "S3Management"
+    effect = "Allow"
     actions = [
       "s3:CreateBucket",
       "s3:DeleteBucket",
@@ -107,8 +107,8 @@ data "aws_iam_policy_document" "terraform_deploy" {
 
   # DynamoDB: terraform lock table
   statement {
-    sid     = "DynamoDBManagement"
-    effect  = "Allow"
+    sid    = "DynamoDBManagement"
+    effect = "Allow"
     actions = [
       "dynamodb:CreateTable",
       "dynamodb:DeleteTable",
@@ -127,8 +127,8 @@ data "aws_iam_policy_document" "terraform_deploy" {
 
   # Lambda + API Gateway + Logs
   statement {
-    sid     = "LambdaAndAPIGWAndLogs"
-    effect  = "Allow"
+    sid    = "LambdaAndAPIGWAndLogs"
+    effect = "Allow"
     actions = [
       "lambda:*",
       "apigateway:*",
@@ -139,8 +139,8 @@ data "aws_iam_policy_document" "terraform_deploy" {
   }
 
   statement {
-    sid     = "IAMForThisStack"
-    effect  = "Allow"
+    sid    = "IAMForThisStack"
+    effect = "Allow"
     actions = [
       "iam:CreateRole",
       "iam:DeleteRole",
