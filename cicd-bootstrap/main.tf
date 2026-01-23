@@ -103,7 +103,8 @@ data "aws_iam_policy_document" "terraform_deploy" {
       "s3:ListMultipartUploadParts",
       "s3:GetBucketTagging",
       "s3:PutBucketTagging",
-      "s3:DeleteBucketTagging"
+      "s3:DeleteBucketTagging",
+      "s3:GetBucketAcl"
     ]
     resources = ["*"]
   }
