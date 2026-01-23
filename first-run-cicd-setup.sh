@@ -60,6 +60,13 @@ github_repo     = "${GITHUB_REPO}"
 aws_region      = "${AWS_REGION}"
 EOF
 
+cat > backend.env <<EOF
+TFSTATE_BUCKET=$(terraform -chdir=bootstrap output -raw tfstate_bucket)
+LOCK_TABLE=$(terraform -chdir=bootstrap output -raw lock_table)
+AWS_REGION=$(terraform -chdir=bootstrap output -raw aws_region 2>/dev/null || echo us-east-1)
+TFSTATE_KEY=${TF_WORKSPACE:-default}/terraform.tfstate
+EOF
+
 echo
 echo "Done."
 echo "Wrote: ${OUT_FILE}"

@@ -406,6 +406,7 @@ terraform.tfstate.backup
 
 # CI/CD supporting files
 cicd-bootstrap/terraform.tfvars
+backend.env
 
 
 # Full Phase backups
