@@ -65,7 +65,6 @@ jobs:
           echo "TFSTATE_BUCKET=$(terraform -chdir=bootstrap output -raw tfstate_bucket)" >> $GITHUB_ENV
           echo "LOCK_TABLE=$(terraform -chdir=bootstrap output -raw lock_table)" >> $GITHUB_ENV
           echo "AWS_REGION=$(terraform -chdir=bootstrap output -raw aws_region)" >> $GITHUB_ENV
-          echo "SUFFIX=$(terraform -chdir=bootstrap output -raw suffix)" >> $GITHUB_ENV
 
       - name: Terraform Init (remote backend)
         shell: bash
@@ -81,5 +80,4 @@ jobs:
 
       - name: Terraform apply (main)
         run: |
-          terraform apply -auto-approve \
-            -var="suffix=${SUFFIX}"
+          terraform apply -auto-approve

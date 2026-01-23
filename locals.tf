@@ -2,7 +2,7 @@ data "aws_region" "current" {}
 
 locals {
   # helps track just in case there might later be multiple deployments (prod, dev, or support for legacy game/save versions)
-  Suffix = coalesce(var.suffix, try(random_id.suffix[0].hex, null))
+  Suffix = random_id.suffix.hex
 
   default_tags = {
     Name           = "TerraformCloudSaveAPI"
