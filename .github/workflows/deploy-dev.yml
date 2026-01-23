@@ -60,12 +60,6 @@ jobs:
       - name: Terraform fmt (repo-wide)
         run: terraform fmt -check -recursive
 
-      - name: Bootstrap validate + apply (create tfstate bucket + lock table)
-        run: |
-          terraform -chdir=bootstrap init
-          terraform -chdir=bootstrap validate
-          terraform -chdir=bootstrap apply -auto-approve
-
       - name: Capture bootstrap outputs
         run: |
           echo "TFSTATE_BUCKET=$(terraform -chdir=bootstrap output -raw tfstate_bucket)" >> $GITHUB_ENV
@@ -73,14 +67,17 @@ jobs:
           echo "AWS_REGION=$(terraform -chdir=bootstrap output -raw aws_region)" >> $GITHUB_ENV
           echo "SUFFIX=$(terraform -chdir=bootstrap output -raw suffix)" >> $GITHUB_ENV
 
-      - name: Terraform init + validate (main backend to S3)
+      - name: Terraform Init (remote backend)
+        shell: bash
         run: |
-          terraform init \
-            -backend-config="bucket=${TFSTATE_BUCKET}" \
-            -backend-config="dynamodb_table=${LOCK_TABLE}" \
-            -backend-config="region=${AWS_REGION}" \
-            -backend-config="key=${TF_WORKSPACE}/terraform.tfstate"
-          terraform validate
+          set -euo pipefail
+
+          terraform init -reconfigure \
+            -backend-config="bucket=${{ vars.TFSTATE_BUCKET }}" \
+            -backend-config="dynamodb_table=${{ vars.LOCK_TABLE }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}" \
+            -backend-config="key=${{ vars.TFSTATE_KEY }}"
+
 
       - name: Terraform apply (main)
         run: |
