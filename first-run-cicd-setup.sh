@@ -60,6 +60,16 @@ github_repo     = "${GITHUB_REPO}"
 aws_region      = "${AWS_REGION}"
 EOF
 
+echo
+echo "==> Applying bootstrap (remote backend foundation: S3 + DynamoDB)..."
+terraform -chdir=bootstrap init
+terraform -chdir=bootstrap apply
+
+terraform -chdir=bootstrap output -raw tfstate_bucket >/dev/null 2>&1 || {
+  echo "ERROR: bootstrap output 'tfstate_bucket' missing."
+  exit 1
+}
+
 cat > backend.env <<EOF
 TFSTATE_BUCKET=$(terraform -chdir=bootstrap output -raw tfstate_bucket)
 LOCK_TABLE=$(terraform -chdir=bootstrap output -raw lock_table)

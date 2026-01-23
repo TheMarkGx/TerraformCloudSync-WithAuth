@@ -51,7 +51,6 @@ if [[ "$REMOTE_MODE" == true ]]; then
     -backend-config="key=${TFSTATE_KEY:-${TF_WORKSPACE:-default}/terraform.tfstate}"
 else
   echo "==> Using LOCAL backend ... -backend=false is set to main root."
-"
   terraform init -reconfigure -backend=false
 fi
 
@@ -97,13 +96,6 @@ terraform fmt -recursive
 terraform validate
 
 rm -rf "$LAYER_BUILD_DIR" #Make sure its cleaned
-
-if [[ "$REMOTE_MODE" == true ]]; then
-  echo
-  echo "NOTE: Remote backend detected. Ready to run:"
-  echo "  terraform -chdir=bootstrap apply"
-  echo
-fi
 
 if [ "$SKIP_PLAN" = false ]; then
   terraform plan -out=plan
