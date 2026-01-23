@@ -69,13 +69,19 @@ jobs:
           echo "AWS_REGION=$(terraform -chdir=bootstrap output -raw aws_region)" >> $GITHUB_ENV
           echo "SUFFIX=$(terraform -chdir=bootstrap output -raw suffix)" >> $GITHUB_ENV
 
+      - name: -Debug- Output backend vars
+        run: |
+          echo "TFSTATE_BUCKET=$TFSTATE_BUCKET"
+          echo "LOCK_TABLE=$LOCK_TABLE"
+          echo "AWS_REGION=$AWS_REGION"
+
       - name: Terraform init + validate (main backend to S3)
         run: |
           terraform init \
             -backend-config="bucket=${TFSTATE_BUCKET}" \
             -backend-config="dynamodb_table=${LOCK_TABLE}" \
             -backend-config="region=${AWS_REGION}" \
-            -backend-config="key=dev/terraform.tfstate"
+            -backend-config="key=terraform.tfstate"
           terraform validate
 
       - name: Terraform apply (main)
