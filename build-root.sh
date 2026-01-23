@@ -99,8 +99,9 @@ rm -rf "$LAYER_BUILD_DIR" #Make sure its cleaned
 
 if [ "$SKIP_PLAN" = false ]; then
   terraform plan -out=plan
-  echo "Ready to run 'terraform apply plan' (You can use -noplan to skip plan)"
+  echo "For local mode; ready to run 'terraform apply plan' (You can use -noplan to skip plan)"
 else
-  echo "Ready to run 'terraform apply'"
+  echo "For local mode; Ready to run 'terraform apply'"
 fi
-  
+
+echo "If CI/CD is configured, use GitHub Actions instead."
