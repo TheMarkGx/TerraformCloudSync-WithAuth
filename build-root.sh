@@ -48,7 +48,7 @@ if [[ "$REMOTE_MODE" == true ]]; then
     -backend-config="bucket=${TFSTATE_BUCKET}" \
     -backend-config="dynamodb_table=${LOCK_TABLE}" \
     -backend-config="region=${AWS_REGION}" \
-    -backend-config="key=${TFSTATE_KEY:-${TF_WORKSPACE:-default}/terraform.tfstate}"
+    -backend-config="key=${TFSTATE_KEY:-terraform.tfstate}"
 else
   echo "==> Using LOCAL backend ... -backend=false is set to main root."
   terraform init -reconfigure -backend=false

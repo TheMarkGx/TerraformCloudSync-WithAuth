@@ -78,7 +78,7 @@ cat > backend.env <<EOF
 TFSTATE_BUCKET=$(terraform -chdir=bootstrap output -raw tfstate_bucket)
 LOCK_TABLE=$(terraform -chdir=bootstrap output -raw lock_table)
 AWS_REGION=$(terraform -chdir=bootstrap output -raw aws_region 2>/dev/null || echo us-east-1)
-TFSTATE_KEY=${TF_WORKSPACE:-default}/terraform.tfstate
+TFSTATE_KEY=terraform.tfstate
 EOF
 
 echo
@@ -124,6 +124,20 @@ echo "  gh variable set ACTIONS_OIDC_ROLE_ARN \\"
 echo "    --repo ${GITHUB_OWNER}/${GITHUB_REPO} \\"
 echo "    --body \"\$(terraform -chdir=cicd-bootstrap output -raw aws_role_arn)\""
 echo
+echo "  gh variable set TFSTATE_BUCKET \\"
+echo "    --repo ${GITHUB_OWNER}/${GITHUB_REPO} \\"
+echo "    --body \"$(terraform -chdir=bootstrap output -raw tfstate_bucket)\""
+echo
+
+echo "  gh variable set LOCK_TABLE \\"
+echo "    --repo ${GITHUB_OWNER}/${GITHUB_REPO} \\"
+echo "    --body \"$(terraform -chdir=bootstrap output -raw lock_table)\""
+echo
+
+echo "  gh variable set TFSTATE_KEY \\"
+echo "    --repo ${GITHUB_OWNER}/${GITHUB_REPO} \\"
+echo "    --body \"terraform.tfstate\""
+echo
 
 read -r -p "Run these gh variable steps now? [y/n]: " RESP2
 RESP2="${RESP2,,}"   # lowercase
@@ -143,6 +157,19 @@ if [[ "$RESP2" == "y" || "$RESP2" == "yes" ]]; then
   gh variable set ACTIONS_OIDC_ROLE_ARN \
     --repo "${GITHUB_OWNER}/${GITHUB_REPO}" \
     --body "$(terraform -chdir=bootstrap output -raw aws_role_arn)"
+
+  gh variable set TFSTATE_BUCKET \
+    --repo "${GITHUB_OWNER}/${GITHUB_REPO}" \
+    --body "$(terraform -chdir=bootstrap output -raw tfstate_bucket)"
+
+  gh variable set LOCK_TABLE \
+    --repo "${GITHUB_OWNER}/${GITHUB_REPO}" \
+    --body "$(terraform -chdir=bootstrap output -raw lock_table)"
+
+  gh variable set TFSTATE_KEY \
+    --repo "${GITHUB_OWNER}/${GITHUB_REPO}" \
+    --body "terraform.tfstate"
+
 fi
 
 echo "Once these variables are set, GitHub Actions is fully enabled."
