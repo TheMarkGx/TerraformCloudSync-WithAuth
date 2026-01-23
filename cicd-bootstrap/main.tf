@@ -100,7 +100,10 @@ data "aws_iam_policy_document" "terraform_deploy" {
       "s3:DeleteObject",
       "s3:AbortMultipartUpload",
       "s3:ListBucketMultipartUploads",
-      "s3:ListMultipartUploadParts"
+      "s3:ListMultipartUploadParts",
+      "s3:GetBucketTagging",
+      "s3:PutBucketTagging",
+      "s3:DeleteBucketTagging"
     ]
     resources = ["*"]
   }
