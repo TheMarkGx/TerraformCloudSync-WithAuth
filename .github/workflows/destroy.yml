@@ -1,0 +1,46 @@
+name: terraform-destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type DESTROY to confirm"
+        required: true
+        default: "NO"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy:
+    # only allow from main branch
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'DESTROY'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS creds (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.ACTIONS_OIDC_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init (remote backend)
+        run: |
+          terraform init -reconfigure \
+            -backend-config="bucket=${{ vars.TFSTATE_BUCKET }}" \
+            -backend-config="dynamodb_table=${{ vars.LOCK_TABLE }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}" \
+            -backend-config="key=${{ vars.TFSTATE_KEY }}"
+
+      - name: Terraform Destroy Plan
+        run: terraform plan -destroy -out=destroy.plan
+
+      - name: Terraform Apply Destroy Plan
+        run: terraform apply -auto-approve destroy.plan
