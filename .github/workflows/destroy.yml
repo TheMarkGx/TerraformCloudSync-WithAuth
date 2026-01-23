@@ -41,6 +41,7 @@ jobs:
       - name: Generate backend.env from bootstrap outputs
         shell: bash
         run: |
+          terraform -chdir=bootstrap init
           set -euo pipefail
           cat > backend.env <<EOF
           TFSTATE_BUCKET=$(terraform -chdir=bootstrap output -raw tfstate_bucket)

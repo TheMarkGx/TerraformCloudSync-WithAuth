@@ -65,10 +65,14 @@ echo "==> Applying bootstrap (remote backend foundation: S3 + DynamoDB)..."
 terraform -chdir=bootstrap init
 terraform -chdir=bootstrap apply
 
+echo "pulling outputs..."
+
 terraform -chdir=bootstrap output -raw tfstate_bucket >/dev/null 2>&1 || {
   echo "ERROR: bootstrap output 'tfstate_bucket' missing."
   exit 1
 }
+
+echo "writing backend.env..."
 
 cat > backend.env <<EOF
 TFSTATE_BUCKET=$(terraform -chdir=bootstrap output -raw tfstate_bucket)
@@ -92,7 +96,7 @@ if [[ "$RESP" == "y" || "$RESP" == "yes" ]]; then
   echo "Running next steps..."
 
   terraform -chdir=cicd-bootstrap init
-  terraform -chdir=cicd-bootstrap apply -auto-approve
+  terraform -chdir=cicd-bootstrap apply --auto-approve
 fi
 
 echo
