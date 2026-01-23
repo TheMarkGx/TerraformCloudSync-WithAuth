@@ -23,7 +23,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Set workspace (dev)
-        run: echo "TF_WORKSPACE=dev" >> $GITHUB_ENV
+        run: echo "TF_WORKSPACE=default" >> $GITHUB_ENV
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
