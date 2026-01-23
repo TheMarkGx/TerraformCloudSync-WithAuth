@@ -22,6 +22,9 @@ jobs:
           role-to-assume: ${{ vars.ACTIONS_OIDC_ROLE_ARN }}
           aws-region: us-east-1
 
+      - name: Set workspace (dev)
+        run: echo "TF_WORKSPACE=dev" >> $GITHUB_ENV
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
@@ -64,8 +67,8 @@ jobs:
 
       - name: Capture bootstrap outputs
         run: |
-          echo "TFSTATE_BUCKET=$(terraform -chdir=bootstrap output -raw tfstate_bucket_name)" >> $GITHUB_ENV
-          echo "LOCK_TABLE=$(terraform -chdir=bootstrap output -raw lock_table_name)" >> $GITHUB_ENV
+          echo "TFSTATE_BUCKET=$(terraform -chdir=bootstrap output -raw tfstate_bucket)" >> $GITHUB_ENV
+          echo "LOCK_TABLE=$(terraform -chdir=bootstrap output -raw lock_table)" >> $GITHUB_ENV
           echo "AWS_REGION=$(terraform -chdir=bootstrap output -raw aws_region)" >> $GITHUB_ENV
           echo "SUFFIX=$(terraform -chdir=bootstrap output -raw suffix)" >> $GITHUB_ENV
 
@@ -75,7 +78,7 @@ jobs:
             -backend-config="bucket=${TFSTATE_BUCKET}" \
             -backend-config="dynamodb_table=${LOCK_TABLE}" \
             -backend-config="region=${AWS_REGION}" \
-            -backend-config="key=terraform.tfstate"
+            -backend-config="key=${TF_WORKSPACE}/terraform.tfstate"
           terraform validate
 
       - name: Terraform apply (main)

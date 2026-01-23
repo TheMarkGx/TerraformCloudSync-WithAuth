@@ -3,6 +3,10 @@ name: terraform-destroy
 on:
   workflow_dispatch:
     inputs:
+      env:
+        description: "Terraform workspace (dev/prod/etc)"
+        required: true
+        default: "dev"
       confirm:
         description: "Type DESTROY to confirm"
         required: true
@@ -28,16 +32,39 @@ jobs:
           role-to-assume: ${{ vars.ACTIONS_OIDC_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
+      - name: Set TF_WORKSPACE
+        run: echo "TF_WORKSPACE=${{ inputs.env }}" >> $GITHUB_ENV
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init (remote backend)
+      - name: Generate backend.env from bootstrap outputs
+        shell: bash
         run: |
+          set -euo pipefail
+          cat > backend.env <<EOF
+          TFSTATE_BUCKET=$(terraform -chdir=bootstrap output -raw tfstate_bucket)
+          LOCK_TABLE=$(terraform -chdir=bootstrap output -raw lock_table)
+          AWS_REGION=$(terraform -chdir=bootstrap output -raw aws_region 2>/dev/null || echo us-east-1)
+          TFSTATE_KEY=${TF_WORKSPACE:-default}/terraform.tfstate
+          EOF
+
+          cat backend.env
+
+      - name: Terraform Init (remote backend)
+        shell: bash
+        run: |
+          set -euo pipefail
+          source backend.env
+          : "${TFSTATE_BUCKET:?missing TFSTATE_BUCKET}"
+          : "${TFSTATE_KEY:?missing TFSTATE_KEY}"
+          : "${AWS_REGION:?missing AWS_REGION}"
+
           terraform init -reconfigure \
-            -backend-config="bucket=${{ vars.TFSTATE_BUCKET }}" \
-            -backend-config="dynamodb_table=${{ vars.LOCK_TABLE }}" \
-            -backend-config="region=${{ vars.AWS_REGION }}" \
-            -backend-config="key=${{ vars.TFSTATE_KEY }}"
+            -backend-config="bucket=${TFSTATE_BUCKET}" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="key=${TFSTATE_KEY}" \
+            -backend-config="dynamodb_table=${LOCK_TABLE}"
 
       - name: Terraform Destroy Plan
         run: terraform plan -destroy -out=destroy.plan

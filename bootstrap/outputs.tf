@@ -2,11 +2,11 @@ output "suffix" {
   value = local.Suffix
 }
 
-output "tfstate_bucket_name" {
+output "tfstate_bucket" {
   value = aws_s3_bucket.tfstate.bucket
 }
 
-output "lock_table_name" {
+output "lock_table" {
   value = aws_dynamodb_table.tf_locks.name
 }
 
