@@ -84,6 +84,17 @@ echo
 echo "Next steps:"
 echo "  terraform -chdir=cicd-bootstrap init"
 echo "  terraform -chdir=cicd-bootstrap apply"
+
+read -r -p "Run these steps now? [y/n]: " RESP
+RESP="${RESP,,}"   # lowercase
+
+if [[ "$RESP" == "y" || "$RESP" == "yes" ]]; then
+  echo "Running next steps..."
+
+  terraform -chdir=cicd-bootstrap init
+  terraform -chdir=cicd-bootstrap apply -auto-approve
+fi
+
 echo
 echo "Optional: create GitHub repo variables (requires GitHub CLI 'gh')."
 echo "If you don't do this here, create them manually in GitHub:"
@@ -109,6 +120,26 @@ echo "  gh variable set ACTIONS_OIDC_ROLE_ARN \\"
 echo "    --repo ${GITHUB_OWNER}/${GITHUB_REPO} \\"
 echo "    --body \"\$(terraform -chdir=cicd-bootstrap output -raw aws_role_arn)\""
 echo
+
+read -r -p "Run these gh variable steps now? [y/n]: " RESP2
+RESP2="${RESP2,,}"   # lowercase
+
+if [[ "$RESP2" == "y" || "$RESP2" == "yes" ]]; then
+  if ! gh auth status >/dev/null 2>&1; then
+    echo "GitHub CLI not authenticated. Launching login..."
+    gh auth login || { echo "GitHub auth aborted. Skipping gh variable setup, this must now be done manually or re-run script."; exit 1; }
+  fi
+
+  echo "Running var registration..."
+
+  gh variable set AWS_REGION \
+    --repo "${GITHUB_OWNER}/${GITHUB_REPO}" \
+    --body "${AWS_REGION}"
+
+  gh variable set ACTIONS_OIDC_ROLE_ARN \
+    --repo "${GITHUB_OWNER}/${GITHUB_REPO}" \
+    --body "$(terraform -chdir=bootstrap output -raw aws_role_arn)"
+fi
 
 echo "Once these variables are set, GitHub Actions is fully enabled."
 echo "CI/CD workflows will assume the role via OIDC with no static AWS credentials."
